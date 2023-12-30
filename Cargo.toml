@@ -1,0 +1,18 @@
+[package]
+name        = "aas"
+version     = "0.0.0"
+authors     = ["Gabriel Bjørnager Jensen"]
+edition     = "2021"
+description = "Arm assembler."
+repository  = "https://mandelbrot.dk/aas"
+
+[[bin]]
+name = "aas"
+path = "src/aas.rs"
+
+[profile.release]
+codegen-units = 1
+lto           = "fat"
+
+[dependencies]
+enum-iterator = "1.4.1"

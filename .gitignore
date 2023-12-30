@@ -1,0 +1,4 @@
+*.bin
+vgcore.*
+/target
+Cargo.lock
