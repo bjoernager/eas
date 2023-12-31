@@ -10,6 +10,10 @@
 \usepackage{titlesec}
 \usepackage{varwidth}
 
+\newcommand{\aasmajor}{0}
+\newcommand{\aasminor}{2}
+\newcommand{\aaspatch}{0}
+
 \newcommand{\documenttitle}{Using AAS}
 
 \title{\documenttitle}
@@ -30,7 +34,11 @@
 	\thispagestyle{empty}
 
 	\vspace*{\fill}
-	\centerline{\huge\bfseries\documenttitle}
+	\begin{center}
+		{\huge\bfseries\documenttitle}
+
+		{\large\aasmajor.\aasminor.\aaspatch}
+	\end{center}
 	\vspace*{\fill}
 
 	\clearpage
@@ -48,7 +56,16 @@
 
 	\clearpage
 	\section{About AAS}
-		AAS -- \textit{Arm Assembler} -- is a cross-assembler for the ARM Instruction Set Architecture.
+		AAS -- the \textit{Advanced Arm Assembler} -- is an open-source cross-assembler for the ARM Instruction Set Architecture.
+
+		\subsection{Copyright \& License}
+			AAS is copyright © 2023 Gabriel Bjørnager Jensen.
+
+			AAS is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+			AAS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+			You should have received a copy of the GNU General Public License along with AAS and/or this manual. If not, see \url{https://www.gnu.org/licenses/}.
 
 	\clearpage
 	\section{Setup}
@@ -66,6 +83,32 @@
 			\end{center}
 
 		\subsection{Installation}
+			First, make sure to meet the prerequisites for installing AAS:
+
+			\begin{itemize}
+				\item Having installed \textit{Rust} and the build system \textit{Cargo}
+				\begin{itemize}
+					\item Install either of the \texttt{rust} or \texttt{rustup} packages using pacman (Arch Linux)
+					\item Install the \texttt{lang/rust} package (FreeBSD)
+					\item View the official Rust documentation at \url{https://www.rust-lang.org/tools/install/}.
+				\end{itemize}
+				\item Having compiled the AAS executable \textbf{using the \textit{release} profile}
+				\begin{itemize}
+					\item Run \texttt{cargo build -{}-release}
+				\end{itemize}
+			\end{itemize}
+
+			Then, to install the executable, simply execute:
+
+			\begin{center}
+				\begin{varwidth}{\linewidth}
+					\ttfamily
+					install -m755 \$\{BINDIR\} "target/release/aas"
+				\end{varwidth}
+			\end{center}
+
+			Wherein \texttt{\$\{BINDIR\}} denotes the destination directory, usually \texttt{"/usr/bin"}.
+
 			A PKGBUILD for AAS will likely be provided in the near future at \url{https://mandelbrot.dk/pkgbuild_aas}.
 
 	\clearpage
@@ -106,45 +149,33 @@
 
 		Comments are denoted with either a \texttt{;} (semicolon) or an \texttt{@} (commercial at). These comments continue until the end of the current line. Multi-line comments are currently not supported.
 
-		\begin{figure}[h]
-			\centering
-
-			\caption{Example of comments.}
-			\label{fig:comments}
+		\begin{center}
 			\begin{varwidth}{\linewidth}
 				\begin{verbatim}
 					           ; This is a comment.
 					           @ This is also a comment.
-					mov r0, pc ; This line will be parsed up till the semicolon.
+					MOV r0, pc ; This line will be parsed up till the semicolon.
 					/*
-					    This is an error (for now).
+					             This is an error (for now).
 					*/
 				\end{verbatim}
 			\end{varwidth}
-		\end{figure}
+		\end{center}
 
-		An identifier prepended with a \texttt{.} (full stop) denotes an assembler directive\footnote{However, if the identifier is also appended with a \texttt{:} (colon), it denotes a label instead.} (see figure \ref{fig:directives}):
+		An identifier prepended with a \texttt{.} (full stop) denotes an assembler directive\footnote{However, if the identifier is also appended with a \texttt{:} (colon), it denotes a label instead.}:
 
-		\begin{figure}[h]
-			\centering
-
-			\caption{Example of directives.}
-			\label{fig:directives}
+		\begin{center}
 			\begin{varwidth}{\linewidth}
 				\begin{verbatim}
-					.byte 0x7F ; This embeds the 8-bit value 0xFF.
-					.thumb     ; All code after this line will be assembled as Thumb code.
+					.BYTE #0x7F ; This embeds the value 127 using eight bits.
+					.THUMB      ; All code after this line will be assembled as Thumb code.
 				\end{verbatim}
 			\end{varwidth}
-		\end{figure}
+		\end{center}
 
-		An identifier appended with a \texttt{:} (colon) denotes a label (see figure \ref{fig:labels}).
+		An identifier appended with a \texttt{:} (colon) denotes a label:
 
-		\begin{figure}[h]
-			\centering
-
-			\caption{Example of labels.}
-			\label{fig:labels}
+		\begin{center}
 			\begin{varwidth}{\linewidth}
 				\begin{verbatim}
 					start:  ; This is a label.
@@ -152,43 +183,63 @@
 					.start: ; This is a label as well.
 				\end{verbatim}
 			\end{varwidth}
-		\end{figure}
+		\end{center}
 
 		\subsection{Accepted Directives}
-			\subsubsection{arm}
-				\textit{Usage: \texttt{.arm}}
+			\subsubsection{ARM}
+				\textit{Usage: \texttt{.ARM}}
 
-				Specifies that all following code be assembled into ARM (32-bit) opcodes. May be overriden by a new \texttt{.thumb} directive.
+				Specifies that all following code be assembled into ARM (32-bit) opcodes. May be overriden by a new \texttt{.THUMB} directive.
 
-			\subsubsection{byte}
-				\textit{Usage: \texttt{.byte <value>}}
+				Thumb-exclusive instructions are translated to their equivalent ARM opcode: For example, the following two instructions are identical:
 
-				Embeds the 8-bit value \textit{value}.
+				\begin{center}
+					\begin{varwidth}{\linewidth}
+						\begin{verbatim}
+							.ARM
+							ASR r0, r1
+							MOV r0, r0, ASR r1
+						\end{verbatim}
+					\end{varwidth}
+				\end{center}
 
-			\subsubsection{doubleword}
-				\textit{Usage: \texttt{.doubleword <value>}}
+			\subsubsection{BYTE}
+				\textit{Usage: \texttt{.BYTE <value>}}
 
-				Embeds the 64-bit value \textit{value}.
+				Embeds the 8-bit value \textit{value} into the executable.
 
-			\subsubsection{global}
-				\textit{Usage: \texttt{.global}}
+				The range of valid values lies in $([0;2^8-1]=[0;255])$.
+
+			\subsubsection{DOUBLEWORD}
+				\textit{Usage: \texttt{.DOUBLEWORD <value>}}
+
+				Embeds the 64-bit value \textit{value} into the executable.
+
+				The range of valid values lies in $([0;2^{64}-1]=[0;18446744073709551615])$.
+
+			\subsubsection{GLOBAL}
+				\textit{Usage: \texttt{.GLOBAL}}
 
 				Specifies that the following label shall be externally visible.
 
-			\subsubsection{halfowrd}
-				\textit{Usage: \texttt{.halfword <value>}}
+			\subsubsection{HALFOWRD}
+				\textit{Usage: \texttt{.HALFWORD <value>}}
 
-				Embeds the 16-bit value \textit{value}.
+				Embeds the 16-bit value \textit{value} into the executable.
 
-			\subsubsection{thumb}
-				\textit{Usage: \texttt{.thumb}}
+				The range of valid values lies in $([0;2^{16}-1]=[0;65535])$.
 
-				Specifies that all following code be assembled into Thumb (16-bit) opcodes. May be overriden by a new \texttt{.arm} directive.
+			\subsubsection{THUMB}
+				\textit{Usage: \texttt{.THUMB}}
 
-			\subsubsection{word}
-				\textit{Usage: \texttt{.word <value>}}
+				Specifies that all following code be assembled into Thumb (16-bit) opcodes. May be overriden by a new \texttt{.ARM} directive.
 
-				Embeds the 32-bit value \textit{value}.
+			\subsubsection{WORD}
+				\textit{Usage: \texttt{.WORD <value>}}
+
+				Embeds the 32-bit value \textit{value} into the executable.
+
+				The range of valid values lies in $([0;2^{32}-1]=[0;4294967295])$.
 
 		\subsection{Character Set}
 			AAS requires that all input files be encoded in UTF-8 \textbf{only}.

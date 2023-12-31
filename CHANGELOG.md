@@ -1,3 +1,10 @@
+# 0.2.0
+
+* Bump minor version
+* Update and fix manual
+* Update copyright notices
+* Change acronym meaning
+
 # 0.1.0
 
 * Bump minor version

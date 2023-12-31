@@ -1,5 +1,5 @@
 /*
-	Copyright 2023 Gabriel Jensen.
+	Copyright 2023 Gabriel Bjørnager Jensen.
 
 	This file is part of AAS.
 
@@ -34,7 +34,7 @@ pub use is_valid_character::*;
 
 pub const VERSION: (u32, u32, u32) = (
 	0x0, // Major
-	0x1, // Minor
+	0x2, // Minor
 	0x0, // Patch
 );
 

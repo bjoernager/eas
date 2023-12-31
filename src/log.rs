@@ -1,5 +1,5 @@
 /*
-	Copyright 2023 Gabriel Jensen.
+	Copyright 2023 Gabriel Bjørnager Jensen.
 
 	This file is part of AAS.
 
