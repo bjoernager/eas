@@ -1,4 +1,3 @@
-*.bin
-vgcore.*
+/docs/build
 /target
 Cargo.lock
