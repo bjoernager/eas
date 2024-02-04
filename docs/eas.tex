@@ -1,0 +1,567 @@
+\documentclass[a4paper]{article}
+
+\newcommand*{\eAS}{\textup{\textit{e}AS}}
+
+\newcommand*{\easversion}{\oldstylenums{0.3.0}}
+
+\newcommand*{\documenttitle}{Using \eAS}
+\newcommand*{\documentdate}{\oldstylenums{2024}-\oldstylenums{02}-\oldstylenums{04}}
+
+\newcommand*{\rulewidth}{0.4pt}
+
+\makeatletter
+\newcommand*{\@usagevalue}[1]{\textit{<#1>}}
+\newcommand*{\@usagevaluestar}[1]{\{\textit{<#1>}\}}
+\newcommand*{\usagevalue}{\@ifstar{\@usagevaluestar}{\@usagevalue}}
+\newcommand*{\usage}[1]{Usage: \fbox{\texttt{#1}}}
+\makeatother
+
+\newenvironment{codeblock}{\mdframed\verbatim}{\endverbatim\endmdframed}
+
+\newenvironment{alertentry}[2]{{\bfseries#1\newline\itshape\tiny#2}\par\small}{}
+
+\usepackage[margin=2cm]{geometry} % Set page size.
+
+\usepackage[british]{babel} % Localise for English
+
+\usepackage{array}
+\usepackage[font={it}, labelfont={bf}]{caption} % Customise captions
+\usepackage{float} % Customise floats
+\usepackage[T1]{fontenc} % Encode special characters
+\usepackage{graphicx} % Embed images
+\usepackage[hidelinks, pdfusetitle]{hyperref} % Create hyperlinks
+\usepackage{lastpage} % Refer to the last page
+\usepackage{mdframed} % Make frames
+\usepackage{nicefrac} % Making "diagonal" fractions
+\usepackage{parskip} % Disable indentations after paragraphs
+\usepackage{varwidth} % Truncate to content width
+\usepackage{verbatim} % Extend verbatims
+
+\usepackage{fancyhdr} % Set headers and footers
+	\pagestyle{fancy}
+	\fancyhf{}
+	\renewcommand*{\headrulewidth}{\rulewidth}
+	\renewcommand*{\footrulewidth}{\rulewidth}
+	\renewcommand*{\sectionmark}[1]{\markboth{\thesection\ #1}{}}
+	\fancyhead[l]{\bfseries\documenttitle}
+	\fancyhead[c]{\bfseries v. \easversion}
+	\fancyhead[r]{\bfseries \nouppercase{\leftmark}} % CONTENTS will be uppercase by default.
+	\fancyfoot[c]{\bfseries Page \nicefrac{\thepage}{\pageref*{LastPage}}}
+
+\usepackage{multicol} % Format in multiple columns
+	\setlength{\columnsep}{1cm}
+	\setlength{\columnseprule}{\rulewidth}
+
+\usepackage{titlesec} % Format heading
+	\titleformat{\section}{\huge\scshape\bfseries}{\thesection}{1ex}{}{}
+	\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1ex}{}{}
+
+\title{\documenttitle}
+\author{Gabriel Bjørnager Jensen}
+\date{\documentdate}
+
+\begin{document}
+	\pagenumbering{gobble} % Don't count the first page.
+	\thispagestyle{empty} % We also don't need any headers or footers here.
+
+	\vspace*{\fill}
+	\begin{center}
+		{\huge\bfseries\documenttitle}
+
+		\includegraphics[interpolate, width=6cm]{build/eas.png} % This is build by the makefile.
+
+		{\huge\bfseries\easversion}
+	\end{center}
+	\vspace*{\fill}
+
+	\clearpage
+	\thispagestyle{empty} % This page is also unique.
+	\begin{center}
+		Copyright © \oldstylenums{2023}-\oldstylenums{2024} Gabriel Bjørnager Jensen.
+
+		This manual is licensed under a Creative Commons Attribution-ShareAlike \oldstylenums{4.0} International license.
+		See more at \url{https://creativecommons.org/licenses/by-sa/4.0/}.
+
+		The \eAS\ logotype ``e'' is licensed under a Creative Commons Attribution-ShareAlike \oldstylenums{4.0} International license.
+		See more at \url{https://creativecommons.org/licenses/by-sa/4.0/}.
+
+		\rule{\linewidth}{\rulewidth}
+
+		\textit{Arm}, \textit{Thumb}, \textit{Arm7}, \textit{Arm7TDMI}, \textit{Arm7TDMI-S}, and \textit{Arm7EJ-S} are registered trademarks or trademarks of Arm Limited (or its subsidiaries or affiliates).
+		\textit{UNIX} is a registered trademark of The Open Group Limited.
+
+		The \eAS\ project is \textit{not} affiliated with Arm Limited and/or The Open Group Limited.
+
+		\vspace*{\fill}
+
+		This manual was written using \LaTeX.
+
+		\documentdate
+	\end{center}
+
+	\clearpage
+	\pagenumbering{arabic} % Now we can number.
+	\tableofcontents
+
+	\clearpage
+	\section{About \eAS}
+		\label{sec:about_eas}
+		\eAS\ (\textit{/i:z/} as in ``ease'') -- the \textit{Embedded Assembler} -- is an open-source cross-assembler for embedded devices using the Arm instruction set architecture.
+
+		The assembler is primarily targeted at UNIX systems -- however -- other platforms may be considered in the future (see section \ref{sec:setup:machine_requirements}).
+
+		\begin{center}
+			\begin{tabular}{|l|l|l|}
+				\multicolumn{3}{c}{\itshape\bfseries Consider checking out some of my related projects:} \\
+				\multicolumn{3}{c}{} \\
+				\hline
+				\multicolumn{1}{|c|}{\bfseries Title} & \multicolumn{1}{c|}{\bfseries Description} & \multicolumn{1}{c|}{\bfseries URL} \\
+				agbsum & AGB image header checksum patcher. & \url{https://mandelbrot.dk/agbsum} \\
+				AX & AGB development framework. & \url{https://mandelbrot.dk/ax} \\
+				Luma & AGB emulator. & \url{https://mandelbrot.dk/luma} \\
+				\hline
+			\end{tabular}
+		\end{center}
+
+		\subsection{Rationale}
+			\label{sec:rationale}
+			I had wanted to write an assembler for the Arm instruction set architecture that:
+
+			\begin{itemize}
+				\item Was open-source
+				\item Had a clean and readable codebase
+				\item Was simple to use and not overly complex (a.k.a. lived up to the ``Unix Philosophy'')
+				\item Could more or less replace armasm (as an open-source alternative)
+				\item Could directly target embedded devices, e.g. the Game Boy Advance (and potentially later consoles)
+				\item \textit{Bonus} --- Could also target hosted systems, e.g. the Raspberry PI running FreeBSD
+			\end{itemize}
+
+			It is easiest to be comfortable with a program which you have written yourself.
+			Or, as Ken Thompson put it:
+
+			\begin{center}
+				\fbox{\centering\itshape\bfseries You can't trust code that you did not totally create yourself.}
+			\end{center}
+
+			Altough this journey is also for the sake of my own experiences, \eAS\ was one of my first projects intended for real-world applications.
+
+		\subsection{Copyright \& License}
+			\label{sec:copyright_and_license}
+			\eAS\ is copyright © \oldstylenums{2023}-\oldstylenums{2024} Gabriel Bjørnager Jensen.
+
+			\eAS\ is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+			\eAS\ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+			See the GNU General Public License for more details.
+
+			You should have received a copy of the GNU General Public License along with \eAS\ and/or this manual.
+			If not, see \url{https://www.gnu.org/licenses/}.
+
+	\clearpage
+	\section{Project Changelog}
+		\label{sec:project_changelog}
+		\begin{multicols*}{2}
+			\subsection*{Version 0.3.0}
+				\label{sec:project_changelog:version_0-3-0}
+				\begin{itemize}
+					\item Bump minor version
+					\item Update manual
+					\item Update crate description
+					\item Update copyright years
+					\item Prioritise armasm compatibility
+					\item Rename project to eAS (was AAS)
+					\item Add logo
+					\item Add trademark notices to manual
+					\item Update readme
+					\item Support long arguments
+					\item Add configuration structure
+					\item Refactor tokeniser
+					\item Bump dependency versions
+					\item Restructure code
+				\end{itemize}
+
+			\subsection*{Version 0.2.0}
+				\label{sec:project_changelog:version_0-2-0}
+				\begin{itemize}
+					\item Bump minor version
+					\item Update and fix manual
+					\item Update copyright notices
+					\item Change acronym meaning
+				\end{itemize}
+
+			\subsection*{Version 0.1.0}
+				\label{sec:project_changelog:version_0-1-0}
+				\begin{itemize}
+					\item Bump minor version
+					\item Add manual
+					\item Update gitignore
+					\item Add readme
+					\item Update license notices
+				\end{itemize}
+
+			\subsection*{Version 0.0.0}
+				\label{sec:project_changelog:version_0-0-0}
+				\begin{itemize}
+					\item Add gitignore
+					\item Add test source file
+					\item Implement tokeniser
+					\item Add license file
+					\item Add changelog
+				\end{itemize}
+		\end{multicols*}
+
+	\clearpage
+	\section{Setup}
+		\label{sec:setup}
+		\subsection{Machine Requirements}
+			\label{sec:setup:machine_requirements}
+			\eAS\ has -- at the moment -- only been tested to work on Arch Linux.
+			However, support is planned for most mainstream UNIX systems and Linux distributions.
+
+		\subsection{Download}
+			\label{sec:setup:download}
+			\eAS\ may be downloaded in source form from one of the following official mirrors:
+
+			\begin{figure}[H]
+				\centering
+
+				\caption{Official mirrors.}
+				\label{fig:mirrors}
+
+				\begin{tabular}{l>{\itshape}l}
+					\hline
+					\multicolumn{1}{>{\bfseries}c}{URL} & \multicolumn{1}{>{\bfseries}c}{Remarks} \\
+					\hline
+					\url{https://mandelbrot.dk/eas}             & The ``main'' mirror \\
+					\url{https://gitlab.com/bjoernager/eas.git} & {} \\
+					\url{https://github.com/bjoernager/eas.git} & {} \\
+					\hline
+				\end{tabular}
+			\end{figure}
+
+			Thanks to GitHub and GitLab for providing the additional (unaffiliated) mirrors.
+
+		\subsection{Installation}
+			\label{sec:setup:installation}
+			First, make sure to meet the prerequisites for installing \eAS\:
+
+			\begin{itemize}
+				\item Having installed \textit{Rust} and the build system \textit{Cargo}
+				\begin{itemize}
+					\item Install either of the \texttt{rust} or \texttt{rustup} packages using pacman (Arch Linux)
+					\item Install the \texttt{lang/rust} package (FreeBSD)
+					\item Read the official Rust documentation at \url{https://www.rust-lang.org/tools/install/}.
+				\end{itemize}
+				\item Having compiled the \eAS\ executable \textbf{using the \textit{release} profile}
+				\begin{itemize}
+					\item Run \texttt{cargo build -{}-release}
+				\end{itemize}
+			\end{itemize}
+
+			Then, to install the executable, simply execute:
+
+			\begin{center}
+				\begin{varwidth}{\linewidth}
+					\ttfamily
+					install -m755 "\$\{BINDIR\}" "target/release/eas"
+				\end{varwidth}
+			\end{center}
+
+			wherein \texttt{\$\{BINDIR\}} denotes the destination directory, usually \texttt{"/usr/bin"}.
+
+			A PKGBUILD for \eAS\ will likely be provided in the near future at \url{https://mandelbrot.dk/pkgbuild_eas}.
+
+	\clearpage
+	\section{Usage}
+		\label{sec:usage}
+		Invoke the assembler using the \texttt{eas} command (or a path to the executable):
+
+		\begin{center}
+			\fbox{\ttfamily eas \usagevalue*{options} \usagevalue{input}}
+		\end{center}
+
+		wherein \texttt{options} is an optional combination of any of the following arguments:
+
+		\begin{tabular}{|>{\ttfamily}l|l}
+			-c\usagevalue{encoding} & Sets the expected input file encoding (character set) to \textit{encoding} \\
+			-f\usagevalue{format} & Sets the target executable format to \textit{format} \\
+			-m\usagevalue{processor} & Sets the target processor (machine) to \textit{processor} \\
+			\multicolumn{2}{c}{} \\
+			-{}-help & Prints help \\
+			-{}-version & Prints versioning
+		\end{tabular}
+
+		Short arguments may be chained together, however, only the last in a chain may be transitive.
+
+		\subsection{File Encodings}
+			\label{sec:usage:file_encodings}
+			Only the following identifier is supported when provided to the \texttt{-c} parameter:
+
+			\begin{itemize}
+				\item \texttt{utf8} \textit{--- default}
+			\end{itemize}
+
+		\subsection{Target Processors}
+			\label{sec:usage:target_processors}
+			Only the following identifier is supported when provided to the \texttt{-m} parameter:
+
+			\begin{itemize}
+				\item \texttt{arm7tdmi}
+			\end{itemize}
+
+		\subsection{Target Executable Formats}
+			\label{sec:usage:target_executable_formats}
+			Only the following identifier is supported when provided to the \texttt{-f} parameter:
+
+			\begin{itemize}
+				\item \texttt{elf} \textit{--- default}
+			\end{itemize}
+
+	\clearpage
+	\section{Syntax}
+		\label{sec:syntax}
+		The syntax of \eAS\ assembly is designed to be largely compatible with that of the official \textit{armasm} assembler.
+
+		Each line of an assembly source file is a \textit{node} and has the following format:
+
+		\begin{center}
+			\begin{varwidth}{\textwidth}
+				\ttfamily
+				\usagevalue*{label} \usagevalue*{instruction} \{; \usagevalue{comment}\}
+			\end{varwidth}
+		\end{center}
+
+		where each part -- the \textit{label}, the \textit{instruction}, and the \textit{comment} -- are optional and may (usually, see below) be provided in any combination.
+
+		A \textit{label} is an identifier that will be assigned to the resulting memory address.
+		Labels are often used to name code blocks (so-called \textit{functions} or \textit{subroutines}), but also variables and constants.
+		Some assembler directives, such as \texttt{ALIGN} (see section \ref{sec:directives:align}), do not accept a label.
+		See each directive's own entry for more information.
+
+		\textit{Instruction} is here used as an umbrella term for actual instructions of Arm architectures, pseudo-instructions, and assembler directives.
+		\textit{Comments} are described in detail in section \ref{sec:syntax:comments}.
+
+		\subsection{Comments}
+			\label{sec:syntax:comments}
+			Comments are denoted with a \texttt{;} (semicolon) delimiter, and continue until the end of the current line.
+			Multi-line comments are not supported.
+
+			\begin{codeblock}
+				           @  This is not comment.
+				           // This is also not a comment.
+				           /*
+				              This is also an error.
+				           */
+
+				           ; This is a comment.
+				MOV r0, pc ; This line will be parsed up till the semicolon.
+			\end{codeblock}
+
+		\subsection{Character Set}
+			\label{sec:syntax:character_set}
+			\eAS\ requires that all input files be encoded in UTF-8 \textbf{only}.
+
+			Outside of strings and comments, only a small subset of ASCII characters are allowed (see figure \ref{fig:character_set}).
+			The presence of any character outside of this subset will yield in an error.
+
+			\begin{figure}[H]
+				\centering
+
+				\caption{ASCII-subset of which character are valid outside strings and comments.}
+				\label{fig:character_set}
+
+				\begin{tabular}{|c|c c c c c c c c c c c c c c c c|}
+					\hline
+					{} & \textbf{0} & \textbf{1} & \textbf{2} & \textbf{3} & \textbf{4} & \textbf{5} & \textbf{6} & \textbf{7} & \textbf{8} & \textbf{9} & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} \\
+					\hline
+					0 & \textit{NUL} & {} & {} & {} & {} & {} & {} & {} & {} & \textit{HT} & \textit{LF} & {} & {} & {} & {} & {} \\
+					1 & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} \\
+					2 & \textit{SP} & ! & " & \# & {} & {} & {} & {} & {} & {} & {} & {} & , & {} & {} & {} \\
+					3 & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & {} & ; & {} & {} & {} & {} \\
+					4 & {} & A & B & C & D & E & F & G & H & I & J & K & L & M & N & O \\
+					5 & P & Q & R & S & T & U & V & W & X & Y & Z & [ & {} & ] & {} & \_ \\
+					6 & {} & a & b & c & d & e & f & g & h & i & j & k & l & m & n & o \\
+					7 & p & q & r & s & t & u & v & w & x & y & z & {} & {} & {} & {} & {} \\
+					\hline
+				\end{tabular}
+			\end{figure}
+
+	\clearpage
+	\section{Directives}
+		\label{sec:directives}
+		\subsection{ALIGN}
+			\label{sec:directives:align}
+			\usage{ALIGN \usagevalue{alignment}}
+
+			Aligns to the next \textit{alignment}-bit boundary.
+			The alignment \textit{alignment} must be a power of two.
+
+		\subsection{CODE16, THUMB}
+			\label{sec:directives:code16}
+			\usage{CODE16|THUMB}
+
+			Indicates that all future code -- until otherwise noted -- should be translated to Thumb instructions.
+
+		\subsection{CODE32, ARM}
+			\label{sec:directives:code32}
+			\usage{CODE32|ARM}
+
+			Indicates that all future code -- until otherwise noted -- should be translated to ARM instructions.
+
+		\subsection{FILL}
+			\label{sec:directives:fill}
+			\usage{\usagevalue*{label} FILL \usagevalue{repeat}\{, \usagevalue{value}\{, \usagevalue{size}\}\}}
+
+			Repeats the value \textit{value} in memory as an integer of \textit{size} bytes a total of \textit{repeat} times.
+
+			If \textit{value} is omitted, and -- by extend -- \textit{size}, they are treated as being zero and one, respectively.
+			In this case, the directive is identical to the \textit{SPACE} directive (see section \ref{sec:directives:space}).
+
+			The label \textit{label} -- if present -- is assigned to destination address.
+
+		\subsection{END}
+			\label{sec:directives:end}
+			\usage{END}
+
+			Signals that the assembler has reached the end of the file.
+			An \texttt{END} directive must be present in each source file.
+
+		\subsection{ENDP, ENDFUNC}
+			\label{sec:directives:endp}
+			\usage{ENDP|ENDFUNC}
+
+			Ends the current function body.
+			An \texttt{ENDP} or \texttt{ENDFUNC} directive may not be present without an equivalent and preceding \texttt{PROC} or \texttt{FUNCTION} directive.
+
+		\subsection{PROC, FUNCTION}
+			\label{sec:directives:proc}
+			\usage{\usagevalue{label} PROC|FUNCTION}
+
+			Signals that a subroutine will follow.
+			Each \texttt{PROC} or \texttt{FUNCTION} directive must have a matching \texttt{ENDP} or \texttt{ENDFUNC} directive before the end-of-file or another subroutine.
+
+		\subsection{SPACE}
+			\label{sec:directives:space}
+			\usage{\usagevalue*{label} SPACE \usagevalue{length}}
+
+			Zero-fills memory of the length \textit{length}.
+			The \texttt{SPACE} directive is identical to the \texttt{FILL} directive with \textit{value} zero and \textit{size} one.
+
+			The label \textit{label} -- if present -- is assigned to destination address.
+
+			\begin{codeblock}
+				SPACE 0xFF
+				FILL  0xFF, 0x0, 0x1 ; Equivalent.
+				FILL  0xFF           ; Also equivalent.
+			\end{codeblock}
+
+	\clearpage
+	\section{Alert Lookup}
+		\label{sec:alerts}
+		\begin{multicols*}{2}
+			\subsection{Syntax Errors}
+				\label{sec:alert_lookup:syntax_errors}
+				\begin{alertentry}{e0000}{END OF FILE}
+					Reached end-of-file before any \texttt{END} directive.
+					This directive must always be present in the end of any source file.
+
+					\textit{See section \ref{sec:directives:end} for more information.}
+				\end{alertentry}
+
+				\begin{alertentry}{e0001}{UNKNOWN MNEMONIC}
+					An unknown instruction, pseudo-instruction, or directive mnemonic was encountered.
+				\end{alertentry}
+
+				\begin{alertentry}{e0002}{ILLEGAL CHARACTER}
+					A character outside the allowed character set was found.
+
+					\textit{See section \ref{sec:syntax:character_set} for a list of allowed characters.}
+				\end{alertentry}
+
+				\begin{alertentry}{e0003}{INCOMPLETE NODE}
+					A node did not meet the requirements to be complete.
+
+					\textit{See section \ref{sec:syntax} for more information.}
+				\end{alertentry}
+
+				\begin{alertentry}{e0004}{UNTERMINATED STRING}
+					An open string did not have a matching terminating \texttt{"} (double quotation mark) character.
+				\end{alertentry}
+
+			\subsection{CLI Errors}
+				\label{sec:alert_lookup:cli_errors}
+
+				\begin{alertentry}{e1000}{INVALID SHORT PARAMETER}
+					An invalid character was provided as a short parameter.
+
+					\textit{See section \ref{sec:usage} for more information.}
+				\end{alertentry}
+
+				\begin{alertentry}{e1001}{MISSING INPUT FILE}
+					An input file was not provided.
+
+					\textit{See section \ref{sec:usage} for more information.}
+				\end{alertentry}
+
+				\begin{alertentry}{e1002}{MISSING TARGET PROCESSOR}
+					A processor target was not provided using the \texttt{-m} parameter.
+
+					\textit{See section \ref{sec:usage} for more information.}
+				\end{alertentry}
+
+				\begin{alertentry}{e1003}{MISSING SHORT VALUE}
+					A transitive short parameter was provided without its value.
+
+					\textit{See section \ref{sec:usage} for more information.}
+				\end{alertentry}
+
+				\begin{alertentry}{e1004}{INVALID TARGET FORMAT}
+					An invalid target format was provided.
+
+					\textit{See section \ref{sec:usage:target_executable_formats} for a list of valid target formats.}
+				\end{alertentry}
+
+				\begin{alertentry}{e1005}{INVALID TARGET PROCESSOR}
+					An invalid target processor was provided.
+
+					\textit{See section \ref{sec:usage:target_processors} for a list of valid target processors.}
+				\end{alertentry}
+
+				\begin{alertentry}{e1006}{INVALID LONG PARAMETER}
+					An invalid long parameter was proivded.
+
+					\textit{See section \ref{sec:usage} for a list of valid long parameters.}
+				\end{alertentry}
+
+				\begin{alertentry}{e1007}{MISSING LONG VALUE}
+					A transitive long parameter was provided without a value
+
+					\textit{See section \ref{sec:usage} for more information.}
+				\end{alertentry}
+
+				\begin{alertentry}{e1008}{MISSING SHORT ARGUMENT}
+					The lone character \texttt{-} (hyphen) was provided as an argument without any trailing short arguments.
+
+					\textit{See section \ref{sec:usage} for more information.}
+				\end{alertentry}
+
+				\begin{alertentry}{e1009}{INVALID FILE ENCODING}
+					An invalid input file format was provided.
+
+					\textit{See section \ref{sec:usage:file_encodings} for a list of valid target processors.}
+				\end{alertentry}
+
+				\begin{alertentry}{e100A}{MISSING LONG ARGUMENT}
+					A double hyphen sequence \texttt{-{}-} was provided without a long argument.
+
+					\textit{See section \ref{sec:usage} for more information.}
+				\end{alertentry}
+
+			\subsection{Internal Errors}
+				\label{sec:alert_lookup:internal_errors}
+
+				\begin{alertentry}{e2000}{ACCESS DENIED}
+					Access was denied to the input file or it doesn't exist.
+				\end{alertentry}
+		\end{multicols*}
+\end{document}

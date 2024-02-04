@@ -20,16 +20,37 @@
 	see <https://www.gnu.org/licenses/>.
 */
 
-use crate::VERSION;
-use crate::app::App;
+use crate::encode_state::EncodeState;
+use crate::node::Node;
 
-use std::process::exit;
+impl Node {
+	#[must_use]
+	pub fn encode(&self, _state: &EncodeState) -> Vec<u8> {
+		use Node::*;
 
-impl App {
-	pub fn print_version() -> ! {
-		println!("\u{1B}[1meAS\u{1B}[0m {:X}.{:X}.{:X}", VERSION.0, VERSION.1, VERSION.2);
-		println!("\u{1B}[3mCopyright \u{A9} 2023 Gabriel Bj\u{F8}rnager Jensen\u{1B}[0m.");
+		let mut binary = Vec::new();
 
-		exit(0x0);
+		match *self {
+			// These don't leak into the binary:
+			| Code16
+			| Code32
+			| End
+			=> {},
+
+			Fill(repeat, value, size) => {
+				let mut bytes = Vec::from(value.to_le_bytes());
+				bytes.resize(size as usize, 0x00);
+
+				for _ in 0x0..repeat { binary.extend_from_slice(&bytes) }
+			}
+
+			Space(length) => for _ in 0x0..length { binary.push(0x00) },
+
+			// In case we missed something.
+			#[allow(unreachable_patterns)]
+			_ => todo!(),
+		};
+
+		return binary;
 	}
 }

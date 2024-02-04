@@ -1,0 +1,21 @@
+<!--
+	This file is licensed under a Creative Commons Attribution-ShareAlike 4.0 International license.
+	See more at <https://creativecommons.org/licenses/by-sa/4.0/>.
+-->
+<!-- For use in the eAS manual. -->
+<svg height="96" width="96" xmlns="http://www.w3.org/2000/svg">
+	<!-- masks -->
+	<mask id="strike">
+		<circle cx="48" cy="48" fill="white" r="36" />
+		<polygon fill="black" points="96,0 96,96 0,96" />
+	</mask>
+	<mask id="outline">
+		<rect fill="white" height="96" mask="url(#outline)" width="96" x="0" y="0" />
+		<circle cx="48" cy="48" fill="black" r="36" />
+		<circle cx="48" cy="48" fill="white" r="24" />
+		<polygon fill="white" points="96,0 96,48 48,48" />
+		<polyline mask="url(#strike)" points="96,0 0,96" stroke="black" stroke-width="24" />
+	</mask>
+	<!-- fills -->
+	<rect fill="#000000" height="96" mask="url(#outline)" rx="12" width="96" x="0" y="0" />
+</svg>

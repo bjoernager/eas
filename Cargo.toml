@@ -1,18 +1,18 @@
 [package]
-name        = "aas"
-version     = "0.2.0"
+name        = "eAS"
+version     = "0.3.0"
 authors     = ["Gabriel Bjørnager Jensen"]
 edition     = "2021"
-description = "Advanced Arm Assembler."
-repository  = "https://mandelbrot.dk/aas"
+description = "The Embedded Assembler."
+repository  = "https://mandelbrot.dk/eas"
 
 [[bin]]
-name = "aas"
-path = "src/aas.rs"
+name = "eas"
+path = "src/eas.rs"
 
 [profile.release]
 codegen-units = 1
 lto           = "fat"
 
 [dependencies]
-enum-iterator = "1.4.1"
+enum-iterator = "1.5.0"

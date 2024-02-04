@@ -1,8 +1,14 @@
-_start:
-	nop ; This is a comment.
-	nop @ This is GNU-style comment.
-	eor r0, r0, r0
-	add r0, r0, #0x1
+        THUMB
+        ARM
+        CODE16
+        CODE32
+;        CODE64 ; Invalid.
 
-.string: ; Labels and directives may share names.
-	.string "Þið sjáið snæri!"
+;        ALIGN 32
+;_start  PROC
+;        MOV r0, pc
+;        NOP                    ; This is a comment.
+;        EOR r0, r0, r0         ; Þið sjáið snæri! (Note illegal characters).
+;        ADD r0, r0, #0x1
+
+        END

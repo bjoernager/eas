@@ -1,131 +1,166 @@
 /*
-	Copyright 2023 Gabriel Bjørnager Jensen.
+	Copyright 2023-2024 Gabriel Bjørnager Jensen.
 
-	This file is part of AAS.
+	This file is part of eAS.
 
-	AAS is free software: you can redistribute it
+	eAS is free software: you can redistribute it
 	and/or modify it under the terms of the GNU
 	General Public License as published by the Free
 	Software Foundation, either version 3 of the
 	License, or (at your option) any later version.
 
-	AAS is distributed in the hope that it will
+	eAS is distributed in the hope that it will
 	be useful, but WITHOUT ANY WARRANTY; without
 	even the implied warranty of MERCHANTABILITY or
 	FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 	General Public License for more details.
 
 	You should have received a copy of the GNU
-	General Public License along with AAS. If not,
+	General Public License along with eAS. If not,
 	see <https://www.gnu.org/licenses/>.
 */
 
 use crate::is_valid_character;
+use crate::error::Error;
+use crate::source_location::SourceLocation;
 use crate::token::Token;
 
 impl Token {
 	#[must_use]
-	pub fn tokenise(input: &str) -> Result<Vec<Self>, String> {
-		let mut tokens: Vec<Self> = Vec::new();
+	pub fn tokenise(input: &str, location: &mut SourceLocation) -> Result<Vec<(SourceLocation, Self)>, Error> {
+		let mut tokens: Vec<(SourceLocation, Self)> = Vec::new();
 
 		let mut input_index: usize = 0x0;
-		while let Some(token) = get_next_token(&input, &mut input_index)? { tokens.push(token) }
+		while let Some(token) = get_next_token(&input, &mut input_index, location)? { tokens.push(token) }
 
 		return Ok(tokens);
 	}
 }
 
 #[must_use]
-fn get_next_token(input: &str, index: &mut usize) -> Result<Option<Token>, String> {
+fn get_next_token(input: &str, index: &mut usize, location: &mut SourceLocation) -> Result<Option<(SourceLocation, Token)>, Error> {
 	use Token::*;
 
-	let mut word = String::new();
-
-	let mut in_comment = false;
-	let mut in_string  = false;
-
 	for c in input.chars().skip(*index) {
-		// Skip until we're out of the comment.
-		if in_comment {
-			if c != '\n' {
-				*index += 0x1;
-				continue;
-			}
-
-			in_comment = false;
-		}
-
-		// Finish the string (if inside one) and return.
-		if in_string {
-			*index += 0x1;
-
-			if c != '"' {
-				word.push(c);
-				continue;
-			}
-
-			return Ok(Some(StringLiteral(word)));
-		}
-
-		// We don't care about invalid character inside of
-		// comments or strings.
-		if !is_valid_character(c) { return Err(format!("invalid character U+{:04X} '{c}' ({index} / {})", c as u32, input.len())) };
-
-		// Check if the word is terminated. If it was, we
-		// don't count this character.
-		if !word.is_empty() {
-			match c {
-				| ' '
-				| '\t'
-				| '\n'
-				| '.'
-				| ','
-				| ':'
-				| ';'
-				| '@'
-				=> return Ok(Some(Word(word))),
-
-				_ => {},
-			};
-		}
+		if !is_valid_character(c) { return Err(Error::IllegalCharacter(c, location.clone()) ) };
 
 		// There aren't any more things to complete
 		// (comments, strings, or words), so we know now
 		// that no more characters will be skipped.
-		*index += 0x1;
+
+		let token_start = location.clone();
+
+		match c {
+			| ' '
+			| '\t'
+			| '\n'
+			| '['
+			| ']'
+			| '.'
+			| ','
+			| '#'
+			| ';'
+			| '"'
+			=> {
+				*index += 0x1;
+				location.next_column();
+			},
+
+			_ => {},
+		};
 
 		match c {
 			| ' '
 			| '\t'
 			=> continue,
 
-			'\n' => return Ok(Some(Return)),
-			'['  => return Ok(Some(BracketLeft)),
-			']'  => return Ok(Some(BracketRight)),
-			'.'  => return Ok(Some(FullStop)),
-			','  => return Ok(Some(Comma)),
-			':'  => return Ok(Some(Colon)),
-			'#'  => return Ok(Some(Hashtag)),
+			'\n' => {
+				location.return_carriage();
+				return Ok(Some((token_start, Return)));
+			},
 
-			| ';'
-			| '@'
-			=> {
-				in_comment = true;
-				continue;
+			'['  => return Ok(Some((token_start, BracketLeft))),
+			']'  => return Ok(Some((token_start, BracketRight))),
+			'.'  => return Ok(Some((token_start, FullStop))),
+			','  => return Ok(Some((token_start, Comma))),
+			'#'  => return Ok(Some((token_start, Hashtag))),
+
+			';' => {
+				skip_line(input, index, location);
+				return Ok(Some((token_start, Return)));
 			},
 
 			'"' => {
-				in_string = true;
-				continue;
+				return match complete_string(input, index, location) {
+					Ok(string) => Ok(Some((token_start, StringLiteral(string)))),
+					_          => Err(Error::UnterminatedString(token_start)),
+				};
 			}
 
 			_ => {},
 		};
 
-		word.push(c);
+		match complete_word(input, index, location) {
+			Some(word) => return Ok(Some((token_start, Word(word)))),
+			_          => {},
+		};
 	}
 
-	if in_string { return Err("unterminated string".to_string()) };
-
 	return Ok(None);
+}
+
+#[must_use]
+fn complete_word(input: &str, index: &mut usize, location: &mut SourceLocation) -> Option<String> {
+	let mut buffer = String::new();
+
+	for c in input.chars().skip(*index) {
+		match c {
+			| ' '
+			| '\t'
+			| '\n'
+			| '.'
+			| ','
+			| ';'
+			=> return Some(buffer),
+
+			_ => buffer.push(c),
+		}
+
+		// Don't count the terminating character.
+		*index += 0x1;
+		location.next_column();
+	}
+
+	return None;
+}
+
+#[must_use]
+fn complete_string(input: &str, index: &mut usize, location: &mut SourceLocation) -> Result<String, ()> {
+	let mut buffer = String::new();
+
+	for c in input.chars().skip(*index) {
+		*index += 0x1;
+
+		match c {
+			'\n' => return Err(()),
+			'"'  => return Ok(buffer),
+			_    => {},
+		};
+
+		location.next_column();
+
+		buffer.push(c);
+	}
+
+	return Err(());
+}
+
+fn skip_line(input: &str, index: &mut usize, location: &mut SourceLocation) {
+	for c in input.chars().skip(*index) {
+		// Skip until we're out of the comment.
+		*index += 0x1;
+		if c == '\n' { break };
+	}
+
+	location.return_carriage();
 }

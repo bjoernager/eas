@@ -1,3 +1,20 @@
+# 0.3.0
+
+* Bump minor version
+* Update manual
+* Update crate description
+* Update copyright years
+* Prioritise armasm compatibility
+* Rename project to eAS (was AAS)
+* Add logo
+* Add trademark notices to manual
+* Update readme
+* Support long arguments
+* Add configuration structure
+* Refactor tokeniser
+* Bump dependency versions
+* Restructure code
+
 # 0.2.0
 
 * Bump minor version

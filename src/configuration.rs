@@ -20,16 +20,17 @@
 	see <https://www.gnu.org/licenses/>.
 */
 
-use crate::VERSION;
-use crate::app::App;
+use crate::encoding::Encoding;
+use crate::format::Format;
+use crate::processor::Processor;
 
-use std::process::exit;
+mod from_arguments;
 
-impl App {
-	pub fn print_version() -> ! {
-		println!("\u{1B}[1meAS\u{1B}[0m {:X}.{:X}.{:X}", VERSION.0, VERSION.1, VERSION.2);
-		println!("\u{1B}[3mCopyright \u{A9} 2023 Gabriel Bj\u{F8}rnager Jensen\u{1B}[0m.");
+pub struct Configuration {
+	pub input:     String,
+	pub output:    String,
 
-		exit(0x0);
-	}
+	pub encoding:  Encoding,
+	pub processor: Processor,
+	pub format:    Format,
 }

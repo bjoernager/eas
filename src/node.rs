@@ -20,16 +20,14 @@
 	see <https://www.gnu.org/licenses/>.
 */
 
-use crate::VERSION;
-use crate::app::App;
+mod encode;
+mod parse;
 
-use std::process::exit;
-
-impl App {
-	pub fn print_version() -> ! {
-		println!("\u{1B}[1meAS\u{1B}[0m {:X}.{:X}.{:X}", VERSION.0, VERSION.1, VERSION.2);
-		println!("\u{1B}[3mCopyright \u{A9} 2023 Gabriel Bj\u{F8}rnager Jensen\u{1B}[0m.");
-
-		exit(0x0);
-	}
+#[derive(Clone, Debug)]
+pub enum Node {
+	Code16,
+	Code32,
+	End,
+	Fill( u64, u64, u64),
+	Space(u64),
 }

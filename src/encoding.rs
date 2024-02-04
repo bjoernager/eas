@@ -27,37 +27,36 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 #[derive(Clone, Copy, Eq, PartialEq, Sequence)]
-pub enum Format {
-	Elf,
+pub enum Encoding {
+	Utf8,
 }
 
-impl Display for Format {
+impl Display for Encoding {
 	fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-		use Format::*;
+		use Encoding::*;
 		return match *self {
-			Elf => write!(f, "elf"),
+			Utf8 => write!(f, "utf8"),
 		};
 	}
 }
 
-impl Default for Format {
+impl Default for Encoding {
 	fn default() -> Self {
-		use Format::*;
-		return Elf;
+		return Encoding::Utf8;
 	}
 }
 
-impl FromStr for Format {
+impl FromStr for Encoding {
 	type Err = Error;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		use Format::*;
+		use Encoding::*;
 
 		let s = s.to_string().to_lowercase();
 		return match s.as_str() {
-			"elf" => Ok(Elf),
+			"utf8" => Ok(Utf8),
 
-			_ => Err(Error::InvalidTargetFormat(s)),
+			_ => Err(Error::InvalidFileEncoding(s)),
 		};
 	}
 }

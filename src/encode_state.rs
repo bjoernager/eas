@@ -1,41 +1,36 @@
 /*
-	Copyright 2023 Gabriel Bjørnager Jensen.
+	Copyright 2023-2024 Gabriel Bjørnager Jensen.
 
-	This file is part of AAS.
+	This file is part of eAS.
 
-	AAS is free software: you can redistribute it
+	eAS is free software: you can redistribute it
 	and/or modify it under the terms of the GNU
 	General Public License as published by the Free
 	Software Foundation, either version 3 of the
 	License, or (at your option) any later version.
 
-	AAS is distributed in the hope that it will
+	eAS is distributed in the hope that it will
 	be useful, but WITHOUT ANY WARRANTY; without
 	even the implied warranty of MERCHANTABILITY or
 	FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 	General Public License for more details.
 
 	You should have received a copy of the GNU
-	General Public License along with AAS. If not,
+	General Public License along with eAS. If not,
 	see <https://www.gnu.org/licenses/>.
 */
 
-extern crate enum_iterator;
+#[derive(Clone, Debug)]
+pub struct EncodeState {
+	pub code16: bool,
+}
 
-mod app;
-mod cpu;
-mod format;
-mod token;
+impl EncodeState {
+	pub const fn new() -> Self { EncodeState {
+		code16: false,
+	} }
+}
 
-mod is_valid_character;
-mod log;
-
-pub use is_valid_character::*;
-
-pub const VERSION: (u32, u32, u32) = (
-	0x0, // Major
-	0x2, // Minor
-	0x0, // Patch
-);
-
-fn main() { app::App::main() }
+impl Default for EncodeState {
+	fn default() -> Self { EncodeState::new() }
+}

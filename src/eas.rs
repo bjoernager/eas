@@ -20,16 +20,28 @@
 	see <https://www.gnu.org/licenses/>.
 */
 
-use crate::VERSION;
-use crate::app::App;
+extern crate enum_iterator;
 
-use std::process::exit;
+mod app;
+mod configuration;
+mod encode_state;
+mod encoding;
+mod error;
+mod format;
+mod node;
+mod processor;
+mod source_location;
+mod token;
 
-impl App {
-	pub fn print_version() -> ! {
-		println!("\u{1B}[1meAS\u{1B}[0m {:X}.{:X}.{:X}", VERSION.0, VERSION.1, VERSION.2);
-		println!("\u{1B}[3mCopyright \u{A9} 2023 Gabriel Bj\u{F8}rnager Jensen\u{1B}[0m.");
+mod is_valid_character;
+mod log;
 
-		exit(0x0);
-	}
-}
+pub use is_valid_character::*;
+
+pub const VERSION: (u32, u32, u32) = (
+	0x0, // Major
+	0x3, // Minor
+	0x0, // Patch
+);
+
+fn main() { app::App::main() }
